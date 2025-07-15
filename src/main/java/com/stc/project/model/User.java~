@@ -5,6 +5,9 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.time.LocalDateTime;
+import java.util.Set;
+
 @Entity
 @Table(name = "user")
 @Getter
@@ -18,10 +21,33 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
     Long id;
-    @Column(name = "username")
+    @Column(name = "username", unique = true)
     String username;
     @Column(name = "hashed_password")
     String hashedPassword;
+    @Column(name = "email", unique = true)
     String email;
-    
+    @Column(name = "otp")
+    String otp;
+
+    @Column(name = "otp_expiry_time")
+    LocalDateTime otpExpiryTime;
+
+    @Column(name = "otp_used")
+    Boolean otpUsed = false;
+
+    @Column(name = "otp_attempt_count")
+    Integer otpAttemptCount = 0;
+
+    @Column(name = "otp_locked_until")
+    LocalDateTime otpLockedUntil;
+
+    @Column(name = "is_verified", nullable = false, columnDefinition = "BIT(1) DEFAULT 0")
+    Boolean isVerified = false;
+    @Column(name = "is_activ", nullable = false, columnDefinition = "BIT(1) DEFAULT 0")
+    Boolean isActive = false;
+
+    @ManyToMany
+    Set<Role> roles;
+
 }

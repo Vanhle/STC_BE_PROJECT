@@ -1,0 +1,41 @@
+package com.stc.project.utils;
+
+
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.experimental.FieldDefaults;
+
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+@Getter
+public enum PermissionEnum {
+    CREATE_PROJECT("CREATE PROJECT"),
+    READ_PROJECT("READ PROJECT"),
+    UPDATE_PROJECT("UPDATE PROJECT"),
+    DELETE_PROJECT("DELETE PROJECT"),
+    CREATE_BUILDING("CREATE BUILDING"),
+    READ_BUILDING("READ BUILDING"),
+    UPDATE_BUILDING("UPDATE BUILDING"),
+    DELETE_BUILDING("DELETE BUILDING"),
+    CREATE_APARTMENT("CREATE APARTMENT"),
+    READ_APARTMENT("READ APARTMENT"),
+    UPDATE_APARTMENT("UPDATE APARTMENT"),
+    DELETE_APARTMENT("DELETE APARTMENT"),
+    CREATE_USER("CREATE USER"),
+    READ_USER("READ USER"),
+    UPDATE_USER("UPDATE USER"),
+    DELETE_USER("DELETE USER"),
+    CREATE_ROLE("CREATE ROLE"),
+    READ_ROLE("READ ROLE"),
+    UPDATE_ROLE("UPDATE ROLE"),
+    DELETE_ROLE("DELETE ROLE"),
+    CREATE_PERMISSION("CREATE PERMISSION"),
+    READ_PERMISSION("READ PERMISSION"),
+    UPDATE_PERMISSION("UPDATE PERMISSION"),
+    DELETE_PERMISSION("DELETE PERMISSION");
+    
+    String description;
+    
+    PermissionEnum(String description) {
+        this.description = description;
+    }
+}

@@ -1,0 +1,2 @@
+package com.stc.project.utils;public enum RoleEnum {
+}

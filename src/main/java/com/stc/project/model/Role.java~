@@ -1,0 +1,17 @@
+package com.stc.project.model;
+
+import jakarta.persistence.Id;
+import jakarta.persistence.ManyToMany;
+
+import java.util.Set;
+
+public class Role {
+    @Id
+    String name;
+    String description;
+
+
+    //1 Role có nhiều permissions và không trùng nhau
+    @ManyToMany
+    Set<Permissions> permissions;
+}
