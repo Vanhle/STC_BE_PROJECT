@@ -1,0 +1,14 @@
+package com.vanhle.basicapi.dto.request;
+
+import jakarta.validation.constraints.NotNull;
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
+public class AuthenticationRequest {
+    @NotNull(message = "USERNAME_REQUIRED")
+    private String username;
+    @NotNull(message = "PASSWORD_REQUIRED")
+    private String password;
+}
