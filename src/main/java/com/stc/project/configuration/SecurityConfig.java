@@ -2,7 +2,9 @@ package com.stc.project.configuration;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -18,6 +20,10 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import java.util.Arrays;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
@@ -26,28 +32,48 @@ import java.time.LocalDateTime;
 @EnableMethodSecurity
 @EnableWebSecurity
 @RequiredArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class SecurityConfig {
 
     CustomJwtDecoder jwtDecoder;
-//    JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
-//    JwtAuthenticationConverter jwtAuthenticationConverter;
+    CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
 
     @Bean
     PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
+
+    /**
+     * Cấu hình CORS để cho phép client truy cập
+     * @Author: @Vanhledeptrai123321
+     */
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173"));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedHeaders(Arrays.asList("*") );
+        configuration.setAllowCredentials(true);
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
+    }
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
+        httpSecurity.cors(cors -> cors.configurationSource(corsConfigurationSource())); // Thêm dòng này để bật CORS
         // Config các endpoint cho phép truy cập
         httpSecurity.authorizeHttpRequests(request ->
-                request.anyRequest().permitAll());
+                request.requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/auth/logout").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/test/*").hasRole("ADMIN"));
 //                        .anyRequest().authenticated());
 
         httpSecurity.oauth2ResourceServer(oauth2 ->
                 oauth2.jwt(jwtConfigurer -> jwtConfigurer.decoder(jwtDecoder)
                                 .jwtAuthenticationConverter(jwtAuthenticationConverter()))
-                        .authenticationEntryPoint(jwtAuthenticationEntryPoint()));
+                        .authenticationEntryPoint(customAuthenticationEntryPoint));
 
         httpSecurity.csrf(csrf -> csrf.disable());
         return httpSecurity.build();
@@ -58,19 +84,19 @@ public class SecurityConfig {
      * Method này sẽ chạy nếu như việc xác thực không thành công.
      * Sẽ trả ra exception
      **/
-    @Bean
-    public AuthenticationEntryPoint jwtAuthenticationEntryPoint() {
-        return new AuthenticationEntryPoint() {
-            @Override
-            public void commence(
-                    HttpServletRequest request,
-                    HttpServletResponse response,
-                    AuthenticationException authException
-            ) throws IOException {
-                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized");
-            }
-        };
-    }
+//    @Bean
+//    public AuthenticationEntryPoint jwtAuthenticationEntryPoint() {
+//        return new AuthenticationEntryPoint() {
+//            @Override
+//            public void commence(
+//                    HttpServletRequest request,
+//                    HttpServletResponse response,
+//                    AuthenticationException authException
+//            ) throws IOException {
+//                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized");
+//            }
+//        };
+//    }
 
     /**
      * trích xuất các quyền hạn từ yêu cầu "scope" của JWT
@@ -86,6 +112,4 @@ public class SecurityConfig {
         converter.setJwtGrantedAuthoritiesConverter(authoritiesConverter);
         return converter;
     }
-
-
 }

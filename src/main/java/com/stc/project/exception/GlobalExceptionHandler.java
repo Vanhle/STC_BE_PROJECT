@@ -30,7 +30,7 @@ public class GlobalExceptionHandler {
                 ApiResponse.<Void>builder()
                         .timestamp(Instant.now())
                         .status(ex.getStatus().value())
-                        .message(ex.getErrorCode().name())
+                        .message(ex.getErrorCode().getErrorMessage()) // Trả về errorMessage thay vì errorCode.name()
                         .data(null)
                         .build()
         );

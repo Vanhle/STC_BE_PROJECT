@@ -27,6 +27,10 @@ public class CustomJwtDecoder implements JwtDecoder {
 
     private final AuthenticationImpl authenticationImpl;
 
+
+    /**
+     * Phải custom lại để thực hiện các logic khác
+     **/
     @Override
     public Jwt decode(String token) throws JwtException {
         try {

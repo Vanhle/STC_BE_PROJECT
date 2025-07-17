@@ -24,7 +24,8 @@ public enum ErrorCode {
     UNAUTHENTICATED("Unauthenticated", HttpStatus.UNAUTHORIZED),
     TOKEN_EXPIRED("Token expired", HttpStatus.UNAUTHORIZED),
     ACCOUNT_LOCKED("Account locked", HttpStatus.UNAUTHORIZED),
-    PASSWORD_OR_EMAIL_USERNAME_INCORRECT("Password or email/username incorrect", HttpStatus.UNAUTHORIZED);
+    PASSWORD_OR_EMAIL_USERNAME_INCORRECT("Password or email/username incorrect", HttpStatus.UNAUTHORIZED),
+    INVALID_REFRESH_TOKEN("Invalid refresh token", HttpStatus.UNAUTHORIZED);
     String errorMessage;
     HttpStatus status;
 
