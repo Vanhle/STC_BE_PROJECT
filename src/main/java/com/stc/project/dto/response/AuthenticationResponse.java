@@ -1,6 +1,8 @@
 package com.stc.project.dto.response;
 
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.stc.project.model.User;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -9,8 +11,10 @@ import lombok.experimental.FieldDefaults;
 @NoArgsConstructor
 @Builder
 @Data
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class AuthenticationResponse {
     String accessToken;
     String refreshToken;
     Long expiresIn;
+    User user;
 }

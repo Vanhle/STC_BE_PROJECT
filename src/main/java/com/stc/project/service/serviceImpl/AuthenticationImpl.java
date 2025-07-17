@@ -97,9 +97,62 @@ public class AuthenticationImpl {
         return AuthenticationResponse.builder()
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
-                .expiresIn(15 * 60L) // 15 minutes in seconds
+                .expiresIn(15 * 60L)// 15 minutes in seconds
                 .build();
 
+    }
+
+    public void logout(String token) throws ParseException, JOSEException {
+        SignedJWT signedToken = verifyToken(token);
+        String jid = signedToken.getJWTClaimsSet().getJWTID();
+        Date expiredTime = signedToken.getJWTClaimsSet().getExpirationTime();
+        InvalidatedToken invalidatedToken = InvalidatedToken.builder()
+                .id(jid)
+                .expiredTime(expiredTime)
+                .build();
+        invalidatedTokenRepository.save(invalidatedToken);
+
+        // Revoke all refresh tokens for this user
+        String username = signedToken.getJWTClaimsSet().getSubject();
+        User user = userRepository.findByUsername(username).get();
+        // Phải revoke refresh token trong database
+        refreshTokenRepository.revokeAllByUserId(user.getId());
+    }
+
+    public AuthenticationResponse refreshToken(String refreshTokenValue) {
+        // 1. Validate refresh token -> Nếu token bị revoke rồi thì throw exception
+        RefreshToken refreshToken = refreshTokenRepository.findByTokenAndIsRevokedFalse(refreshTokenValue)
+                .orElseThrow(() -> new AppException(ErrorCode.INVALID_REFRESH_TOKEN));
+
+        // 2. Check expiration -> expired phải sau ngay hien tai
+        if (refreshToken.getExpiresAt().before(new Date())) {
+            throw new AppException(ErrorCode.INVALID_REFRESH_TOKEN);
+        }
+
+        // 3. Get user
+        User user = userRepository.findById(refreshToken.getUserId())
+                .orElseThrow(() -> new AppException(ErrorCode.INVALID_REFRESH_TOKEN));
+
+        // 4. Generate new access token
+        String newAccessToken = generateAccessToken(user);
+
+        // 5. Rotate refresh token
+        String newRefreshToken = rotateRefreshToken(refreshToken, user);
+
+        return AuthenticationResponse.builder()
+                .accessToken(newAccessToken)
+                .refreshToken(newRefreshToken)
+                .expiresIn(15 * 60L) // 15 minutes
+                .build();
+    }
+
+    private String rotateRefreshToken(RefreshToken oldToken, User user) {
+        // Revoke old token
+        oldToken.setRevoked(true);
+        refreshTokenRepository.save(oldToken);
+
+        // Generate new refresh token
+        return generateRefreshToken(user);
     }
 
     /**
@@ -129,7 +182,7 @@ public class AuthenticationImpl {
         JWSHeader header = new JWSHeader(JWSAlgorithm.HS512);
         JWTClaimsSet claims = new JWTClaimsSet.Builder()
                 .subject(users.getUsername())
-                .issuer("vanhle.com")
+                .issuer("stc.project.com")
                 .issueTime(new Date())
                 .expirationTime(new Date(System.currentTimeMillis() + 15 * 60 * 1000)) // 15 minutes
                 .claim("scope", buildScope(users))
@@ -177,23 +230,6 @@ public class AuthenticationImpl {
             });
         }
         return stringJoiner.toString();
-    }
-
-    public void logout(LogoutRequest request) throws ParseException, JOSEException {
-        SignedJWT signedToken = verifyToken(request.getToken());
-        String jid = signedToken.getJWTClaimsSet().getJWTID();
-        Date expiredTime = signedToken.getJWTClaimsSet().getExpirationTime();
-        InvalidatedToken invalidatedToken = InvalidatedToken.builder()
-                .id(jid)
-                .expiredTime(expiredTime)
-                .build();
-        invalidatedTokenRepository.save(invalidatedToken);
-
-        // Revoke all refresh tokens for this user
-        String username = signedToken.getJWTClaimsSet().getSubject();
-        User user = userRepository.findByUsername(username).get();
-        // Phải revoke refresh token trong database
-        refreshTokenRepository.revokeAllByUserId(user.getId());
     }
 
 
