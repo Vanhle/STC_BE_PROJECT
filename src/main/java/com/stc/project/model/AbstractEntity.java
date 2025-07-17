@@ -2,9 +2,7 @@ package com.stc.project.model;
 
 
 import jakarta.persistence.Column;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.MappedSuperclass;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
@@ -17,12 +15,9 @@ import java.time.LocalDateTime;
 
 @Getter
 @Setter
+@MappedSuperclass
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public abstract class AbstractEntity implements Serializable {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id")
-    Long id;
 
     @Column(name = "created_at")
     @CreationTimestamp
@@ -37,6 +32,10 @@ public abstract class AbstractEntity implements Serializable {
 
     @Column(name = "updated_by")
     String updatedBy;
+
+    Integer active;
+    LocalDateTime deletedAt;
+    LocalDateTime deactivatedAt;
 
 
 }
