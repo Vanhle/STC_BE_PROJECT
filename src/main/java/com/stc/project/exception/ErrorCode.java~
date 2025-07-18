@@ -26,8 +26,7 @@ public enum ErrorCode {
     ACCOUNT_LOCKED("Account locked", HttpStatus.UNAUTHORIZED),
     PASSWORD_OR_EMAIL_USERNAME_INCORRECT("Password or email/username incorrect", HttpStatus.UNAUTHORIZED),
     INVALID_REFRESH_TOKEN("Invalid refresh token", HttpStatus.UNAUTHORIZED),
-    PASSWORD_AND_COMFIRM_PASSWORD_NOT_MATCH("Password and confirm password not match", HttpStatus.BAD_REQUEST),
-    EMAIL_EXISTED("Email existed", HttpStatus.BAD_REQUEST);
+    PASSWORD_AND_COMFIRM_PASSWORD_NOT_MATCH("Password and confirm password not match", HttpStatus.BAD_REQUEST);
     String errorMessage;
     HttpStatus status;
 
