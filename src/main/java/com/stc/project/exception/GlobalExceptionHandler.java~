@@ -30,7 +30,7 @@ public class GlobalExceptionHandler {
                 ApiResponse.<Void>builder()
                         .timestamp(Instant.now())
                         .status(ex.getStatus().value())
-                        .message(ex.getErrorCode().name())
+                        .message(ex.getErrorCode().getErrorMessage()) // Trả về errorMessage thay vì errorCode.name()
                         .data(null)
                         .build()
         );
@@ -38,10 +38,11 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(value = MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse<List<Map<String, String>>>> handleValidationErrors(MethodArgumentNotValidException ex) {
-        List<Map<String, String>> errors = ex.getBindingResult().getFieldErrors().stream()
+        log.info("MethodArgumentNotValidException: {}", ex.getBindingResult().getFieldErrors());
+        List<Map<String, String>> errors = ex.getFieldError().getDefaultMessage().stream()
                 .map(error -> Map.of(
                         "field", error.getField(),
-                        "message", error.getDefaultMessage()
+                        "message", ErrorCode.valueOf(error.getDefaultMessage())
                 ))
                 .collect(Collectors.toList());
 
