@@ -4,6 +4,7 @@ package com.stc.project.controller;
 import com.nimbusds.jose.JOSEException;
 import com.stc.project.dto.request.AuthenticationRequest;
 import com.stc.project.dto.request.LogoutRequest;
+import com.stc.project.dto.request.RefreshTokenRequest;
 import com.stc.project.dto.response.ApiResponse;
 import com.stc.project.dto.response.AuthenticationResponse;
 import com.stc.project.service.serviceImpl.AuthenticationImpl;
@@ -54,5 +55,16 @@ public class AuthenticationController {
         return ResponseEntity.ok(apiResponse);
     }
 
-
+    @PostMapping("/refresh")
+    public ResponseEntity<?> refresh(@RequestBody @Valid RefreshTokenRequest refreshToken) throws ParseException, JOSEException {
+        // Lấy token từ header dạng: Bearer <token>
+        AuthenticationResponse response = authenticationImpl.refreshToken(refreshToken.getRefreshToken());
+        ApiResponse<AuthenticationResponse> apiResponse = ApiResponse.<AuthenticationResponse>builder()
+                .timestamp(Instant.now())
+                .status(HttpStatus.OK.value())
+                .message("Refresh token successfully")
+                .data(response)
+                .build();
+        return ResponseEntity.ok(apiResponse);
+    }
 }
