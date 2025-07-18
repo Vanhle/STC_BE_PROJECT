@@ -7,14 +7,17 @@ import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import com.stc.project.dto.request.AuthenticationRequest;
 import com.stc.project.dto.request.LogoutRequest;
+import com.stc.project.dto.request.RegisterRequest;
 import com.stc.project.dto.response.AuthenticationResponse;
 import com.stc.project.exception.AppException;
 import com.stc.project.exception.ErrorCode;
 import com.stc.project.model.InvalidatedToken;
 import com.stc.project.model.RefreshToken;
+import com.stc.project.model.Role;
 import com.stc.project.model.User;
 import com.stc.project.repository.InvalidatedTokenRepository;
 import com.stc.project.repository.RefreshTokenRepository;
+import com.stc.project.repository.RoleRepository;
 import com.stc.project.repository.UserRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +33,8 @@ import java.text.ParseException;
 import java.util.Date;
 import java.util.StringJoiner;
 import java.util.UUID;
+import java.util.Optional;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -42,6 +47,7 @@ public class AuthenticationImpl {
     InvalidatedTokenRepository invalidatedTokenRepository;
     UserRepository userRepository;
     RefreshTokenRepository refreshTokenRepository;
+    RoleRepository roleRepository;
 
 
     /**
@@ -144,6 +150,38 @@ public class AuthenticationImpl {
                 .refreshToken(newRefreshToken)
                 .expiresIn(15 * 60L) // 15 minutes
                 .build();
+    }
+
+    public void register(RegisterRequest rq) {
+        // Kiểm tra password và confirm password
+        if (!rq.getPassword().equals(rq.getConfirmPassword())) {
+            throw new AppException(ErrorCode.PASSWORD_AND_COMFIRM_PASSWORD_NOT_MATCH); // Có thể tạo ErrorCode riêng cho lỗi này nếu muốn
+        }
+        // Kiểm tra email đã tồn tại
+        Optional<User> userByEmail = userRepository.findByEmail(rq.getEmail());
+        if (userByEmail.isPresent()) {
+            throw new AppException(ErrorCode.EMAIL_EXISTED); // Có thể tạo ErrorCode riêng cho lỗi này nếu muốn
+        }
+        // Kiểm tra username đã tồn tại
+        Optional<User> userByUsername = userRepository.findByUsername(rq.getUsername());
+        if (userByUsername.isPresent()) {
+            throw new AppException(ErrorCode.USER_EXISTED); // Có thể tạo ErrorCode riêng cho lỗi này nếu muốn
+        }
+        // Mã hoá password
+        PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+        String hashedPassword = passwordEncoder.encode(rq.getPassword());
+        // Tạo user mới
+        User user = User.builder()
+                .email(rq.getEmail())
+                .username(rq.getUsername())
+                .hashedPassword(hashedPassword)
+                .isActive(true)
+                .isVerified(false)
+                .build();
+        // Gán role MANAGER cho user mới
+        Set<Role> managerRole = roleRepository.findByName("MANAGER");
+        user.setRoles(managerRole);
+        userRepository.save(user);
     }
 
     private String rotateRefreshToken(RefreshToken oldToken, User user) {

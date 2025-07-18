@@ -68,9 +68,13 @@ public class SecurityConfig {
                 request.requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/auth/logout").permitAll()
                         .requestMatchers(HttpMethod.POST, "/auth/refresh").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/projects/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/test/*").hasRole("ADMIN"));
-//                        .anyRequest().authenticated());
+                        .requestMatchers(HttpMethod.POST, "/auth/register").permitAll()
+                        .requestMatchers( "/api/projects/**").authenticated()
+                        .requestMatchers( "/api/buildings/**").authenticated()
+                        .requestMatchers( "/api/apartments/**").authenticated()
+                        .requestMatchers( "/api/users/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/test/*").hasRole("ADMIN")
+                        .anyRequest().authenticated());
 
         httpSecurity.oauth2ResourceServer(oauth2 ->
                 oauth2.jwt(jwtConfigurer -> jwtConfigurer.decoder(jwtDecoder)
