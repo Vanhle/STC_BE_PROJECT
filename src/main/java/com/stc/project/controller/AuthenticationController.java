@@ -1,14 +1,10 @@
 package com.stc.project.controller;
 
-
 import com.nimbusds.jose.JOSEException;
-import com.stc.project.dto.request.AuthenticationRequest;
-import com.stc.project.dto.request.LogoutRequest;
-import com.stc.project.dto.request.RefreshTokenRequest;
-import com.stc.project.dto.request.RegisterRequest;
+import com.stc.project.dto.request.*;
 import com.stc.project.dto.response.ApiResponse;
 import com.stc.project.dto.response.AuthenticationResponse;
-import com.stc.project.service.serviceImpl.AuthenticationImpl;
+import com.stc.project.service.AuthenticationService;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -29,10 +25,11 @@ import java.time.Instant;
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class AuthenticationController {
-    AuthenticationImpl authenticationImpl;
+    AuthenticationService authenticationService;
+
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody @Valid AuthenticationRequest rq) {
-        AuthenticationResponse response = authenticationImpl.checkLogin(rq);
+        AuthenticationResponse response = authenticationService.checkLogin(rq);
         ApiResponse<AuthenticationResponse> apiResponse = ApiResponse.<AuthenticationResponse>builder()
                 .timestamp(Instant.now())
                 .status(HttpStatus.OK.value())
@@ -47,7 +44,7 @@ public class AuthenticationController {
     public ResponseEntity<?> logout(@RequestHeader("Authorization") String authorizationHeader) throws ParseException, JOSEException {
         // Lấy token từ header dạng: Bearer <token>
         String token = authorizationHeader.replace("Bearer ", "");
-        authenticationImpl.logout(token);
+        authenticationService.logout(token);
         ApiResponse<String> apiResponse = ApiResponse.<String>builder()
                 .timestamp(Instant.now())
                 .status(HttpStatus.OK.value())
@@ -59,7 +56,7 @@ public class AuthenticationController {
     @PostMapping("/refresh")
     public ResponseEntity<?> refresh(@RequestBody @Valid RefreshTokenRequest refreshToken) throws ParseException, JOSEException {
         // Lấy token từ header dạng: Bearer <token>
-        AuthenticationResponse response = authenticationImpl.refreshToken(refreshToken.getRefreshToken());
+        AuthenticationResponse response = authenticationService.refreshToken(refreshToken.getRefreshToken());
         ApiResponse<AuthenticationResponse> apiResponse = ApiResponse.<AuthenticationResponse>builder()
                 .timestamp(Instant.now())
                 .status(HttpStatus.OK.value())
@@ -71,11 +68,55 @@ public class AuthenticationController {
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody @Valid RegisterRequest rq) {
-        authenticationImpl.register(rq);
+        authenticationService.register(rq);
         ApiResponse<String> apiResponse = ApiResponse.<String>builder()
                 .timestamp(Instant.now())
                 .status(HttpStatus.OK.value())
                 .message("Register successfully")
+                .build();
+        return ResponseEntity.ok(apiResponse);
+    }
+
+    @PostMapping("/verifyotp")
+    public ResponseEntity<?> verifyOtp(@RequestBody @Valid VerifyOtpRequest rq) {
+        boolean check = authenticationService.verifyOtp(rq.getEmail(), rq.getOtp());
+        ApiResponse<Void> apiResponse = ApiResponse.<Void>builder()
+                .timestamp(Instant.now())
+                .status(check ? HttpStatus.OK.value() : HttpStatus.BAD_REQUEST.value())
+                .message(check ? "Verify otp successfully" : "False to verify OTP")
+                .build();
+        return ResponseEntity.ok(apiResponse);
+    }
+
+    @PostMapping("/resendotp")
+    public ResponseEntity<?> resendOtp(@RequestBody @Valid ResendOtpRequest rq) {
+        authenticationService.refreshOtp(rq.getEmail());
+        ApiResponse<Void> apiResponse = ApiResponse.<Void>builder()
+                .timestamp(Instant.now())
+                .status(HttpStatus.OK.value())
+                .message("Resend otp successfully")
+                .build();
+        return ResponseEntity.ok(apiResponse);
+    }
+
+    @PostMapping("/forgotpassword")
+    public ResponseEntity<?> forgotPassword(@RequestBody @Valid ForgotPasswordRequest request) {
+        authenticationService.forgotPassword(request);
+        ApiResponse<Void> apiResponse = ApiResponse.<Void>builder()
+                .timestamp(Instant.now())
+                .status(HttpStatus.OK.value())
+                .message("Mã OTP đã được gửi đến email của bạn")
+                .build();
+        return ResponseEntity.ok(apiResponse);
+    }
+
+    @PostMapping("/resetpassword")
+    public ResponseEntity<?> resetPassword(@RequestBody @Valid ResetPasswordRequest request) {
+        authenticationService.resetPassword(request);
+        ApiResponse<Void> apiResponse = ApiResponse.<Void>builder()
+                .timestamp(Instant.now())
+                .status(HttpStatus.OK.value())
+                .message("Đặt lại mật khẩu thành công")
                 .build();
         return ResponseEntity.ok(apiResponse);
     }
