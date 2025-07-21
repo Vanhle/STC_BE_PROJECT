@@ -5,6 +5,7 @@ import com.stc.project.dto.response.ApiResponse;
 import com.stc.project.dto.response.AuthenticationResponse;
 import com.stc.project.exception.AppException;
 import com.stc.project.exception.ErrorCode;
+import com.stc.project.service.EmailService;
 import com.stc.project.service.serviceImpl.AuthenticationImpl;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
@@ -25,6 +26,7 @@ import java.time.Instant;
 public class test {
 
     AuthenticationImpl authenticationImpl;
+    EmailService emailService;
 
     @GetMapping("/{id}")
     public String test(@PathVariable Long id) {
@@ -51,5 +53,11 @@ public class test {
     public String test() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         return authentication.getName();
+    }
+
+    @PostMapping("/sendmail")
+    public String sendMail() {
+        emailService.sendSimpleEmail("levietanh20033002@gmail.com", "testsub", "test");
+        return "test";
     }
 }

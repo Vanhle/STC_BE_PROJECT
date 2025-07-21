@@ -63,12 +63,21 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
         httpSecurity.cors(cors -> cors.configurationSource(corsConfigurationSource())); // Thêm dòng này để bật CORS
+
         // Config các endpoint cho phép truy cập
         httpSecurity.authorizeHttpRequests(request ->
-                request.requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/auth/logout").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/auth/refresh").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/auth/register").permitAll()
+                request
+                        // Swagger endpoints - phải đặt đầu tiên
+                        .requestMatchers(
+                                "/v3/api-docs/**",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html",
+                                "/swagger-resources/**",
+                                "/webjars/**"
+                        ).permitAll()
+                        // Auth endpoints
+                        .requestMatchers(HttpMethod.POST, "/auth/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/auth/**").permitAll()
                         .requestMatchers( "/api/projects/**").authenticated()
                         .requestMatchers( "/api/buildings/**").authenticated()
                         .requestMatchers( "/api/apartments/**").authenticated()
@@ -76,12 +85,18 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/test/*").hasRole("ADMIN")
                         .anyRequest().authenticated());
 
+        // Chỉ áp dụng JWT cho các endpoint cần xác thực
         httpSecurity.oauth2ResourceServer(oauth2 ->
                 oauth2.jwt(jwtConfigurer -> jwtConfigurer.decoder(jwtDecoder)
                                 .jwtAuthenticationConverter(jwtAuthenticationConverter()))
                         .authenticationEntryPoint(customAuthenticationEntryPoint));
 
         httpSecurity.csrf(csrf -> csrf.disable());
+
+        // Tắt session management để đảm bảo stateless
+        httpSecurity.sessionManagement(session ->
+            session.sessionCreationPolicy(org.springframework.security.config.http.SessionCreationPolicy.STATELESS));
+
         return httpSecurity.build();
     }
 
