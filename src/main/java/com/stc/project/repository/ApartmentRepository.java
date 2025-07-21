@@ -8,8 +8,6 @@ import java.util.List;
 
 public interface ApartmentRepository extends CustomJpaRepository<Apartment, Long> {
 
-    List<Apartment> findByCreatedBy(String username);
-
     List<Apartment> findByBuilding_Id(Long buildingId);
 
 }

@@ -14,6 +14,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+import java.util.Map;
+
 
 @RestController
 @RequestMapping("/api/projects")
@@ -31,11 +34,31 @@ public class ProjectController extends CrudController<Project, Long> {
         this.baseUrl = "/api/projects";
     }
 
-    //get data created by user đang login
-    @GetMapping("/detail")
-    public ResponseEntity<?> getData() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String username = authentication.getName();
-        return ResponseEntity.ok(projectRepository.findByCreatedBy(username));
+    //  endpoint này được gọi trong trang thống kê
+    @GetMapping("/project-count")
+    public long countActiveProjects() {
+        return projectService.countActiveProjects();
+    }
+
+
+    //  endpoint này được gọi trong trang thống kê
+    @GetMapping("/district-count")
+    public long countDistinctDistricts() {
+        return projectService.countDistinctDistricts();
+    }
+
+
+    //  endpoint này được gọi trong trang thống kê
+    @GetMapping("/statistics/district")
+    public ResponseEntity<List<Map<String, Object>>> getProjectCountByDistrict() {
+        List<Map<String, Object>> data = projectService.countProjectByDistrict();
+        return ResponseEntity.ok(data);
+    }
+
+
+    //  endpoint này được gọi trong trang thống kê
+    @GetMapping("/statistics/year")
+    public List<Map<String, Object>> countProjectByYear() {
+        return projectService.countProjectByYear();
     }
 }

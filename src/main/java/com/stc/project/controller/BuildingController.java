@@ -30,12 +30,10 @@ public class BuildingController extends CrudController<Building, Long> {
         this.baseUrl = "/api/buildings";
     }
 
-    //get data created by user đang login
-    @GetMapping("/detail")
-    public ResponseEntity<?> getData() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String username = authentication.getName();
-        return ResponseEntity.ok(buildingRepository.findByCreatedBy(username));
+    //  endpoint này được gọi trong trang thống kê
+    @GetMapping("/building-count")
+    public long countTotalBuildings() {
+        return buildingService.countActiveBuildings();
     }
 }
 
