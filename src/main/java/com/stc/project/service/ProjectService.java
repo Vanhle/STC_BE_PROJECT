@@ -13,7 +13,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -183,6 +186,48 @@ public class ProjectService extends CrudService<Project, Long> {
         }
     }
 
+
+    // hàm này sd trong trang thống kê
+    public long countActiveProjects() {
+        return projectRepository.countActiveProjects();
+    }
+
+    // hàm này sd trong trang thống kê
+    public long countDistinctDistricts() {
+        return projectRepository.countDistinctDistricts();
+    }
+
+    // hàm này sd trong trang thống kê
+    public List<Map<String, Object>> countProjectByDistrict() {
+        List<Object[]> rawResults = projectRepository.countProjectByDistrict();
+        List<Map<String, Object>> result = new ArrayList<>();
+
+        for (Object[] row : rawResults) {
+            Map<String, Object> item = new HashMap<>();
+            item.put("district", row[0]);
+            item.put("count", ((Number) row[1]).longValue());
+            result.add(item);
+        }
+
+        return result;
+    }
+
+    // hàm này sd trong trang thống kê
+    public List<Map<String, Object>> countProjectByYear() {
+        List<Object[]> results = projectRepository.countProjectByYear();
+        List<Map<String, Object>> response = new ArrayList<>();
+
+        for (Object[] row : results) {
+            Integer year = (Integer) row[0];
+            Long count = ((Number) row[1]).longValue();
+            Map<String, Object> item = new HashMap<>();
+            item.put("year", year);
+            item.put("count", count);
+            response.add(item);
+        }
+
+        return response;
+    }
 
 
 

@@ -159,7 +159,10 @@ public class BuildingService extends CrudService<Building, Long> {
         }
     }
 
-
+    // hàm này sd trong trang thống kê
+    public long countActiveBuildings() {
+        return buildingRepository.countActiveBuildings();
+    }
 
 
 }

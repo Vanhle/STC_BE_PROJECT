@@ -60,19 +60,71 @@ public class CrudService<T extends AbstractEntity, ID extends Serializable> {
     }
 
 
+    // NEED  TO CHECK
+    // Nếu người dùng có role ROLE_MANAGER, thì TỰ ĐỘNG FILL điều kiện createdBy==<username> vào query.
+    // Nếu là ROLE_ADMIN, thì giữ nguyên query được truyền
     public Page<T> search(String query, Pageable pageable) {
-        if (StringUtils.isEmpty(query)) {
-            return repository.findAll(pageable);
-        }
         try {
-            Node rootNode = new RSQLParser().parse(query);
-            Specification<T> spec = rootNode.accept(new CustomRsqlVisitor<T>());
-            return repository.findAll(spec, pageable);
+            String username = SecurityUtil.getCurrentUserLogin();
+
+            logger.info("=== SEARCH DEBUG START ===");
+            logger.info("Username: {}", username);
+            logger.info("Is Admin: {}", SecurityUtil.isAdmin());
+            logger.info("Is Manager: {}", SecurityUtil.isManager());
+            logger.info("Original Query: {}", query);
+
+            // Logic rõ ràng theo role
+            if (SecurityUtil.isAdmin()) {
+                // ADMIN: Xem tất cả records, giữ nguyên query gốc
+                logger.info("ADMIN - Processing original query: {}", query);
+
+                if (!StringUtils.hasText(query)) {
+                    // Không có filter gì, trả về tất cả
+                    logger.info("ADMIN - No query, returning all records");
+                    Page<T> result = repository.findAll(pageable);
+                    logger.info("ADMIN - Result count: {}", result.getTotalElements());
+                    logger.info("=== SEARCH DEBUG END ===");
+                    return result;
+                } else {
+                    // Có query, thực hiện RSQL với query gốc
+                    logger.info("ADMIN - Executing RSQL with original query: {}", query);
+                    Node rootNode = new RSQLParser().parse(query);
+                    Specification<T> spec = rootNode.accept(new CustomRsqlVisitor<T>());
+                    Page<T> result = repository.findAll(spec, pageable);
+                    logger.info("ADMIN - RSQL Result count: {}", result.getTotalElements());
+                    logger.info("=== SEARCH DEBUG END ===");
+                    return result;
+                }
+
+            } else if (SecurityUtil.isManager()) {
+                // MANAGER: Chỉ xem records do chính họ tạo
+                String managerQuery;
+                if (!StringUtils.hasText(query)) {
+                    managerQuery = "createdBy==" + username;
+                } else {
+                    managerQuery = "(" + query + ");createdBy==" + username;
+                }
+
+                logger.info("MANAGER - Modified query: {}", managerQuery);
+                Node rootNode = new RSQLParser().parse(managerQuery);
+                Specification<T> spec = rootNode.accept(new CustomRsqlVisitor<T>());
+                Page<T> result = repository.findAll(spec, pageable);
+                logger.info("MANAGER - Result count: {}", result.getTotalElements());
+                logger.info("=== SEARCH DEBUG END ===");
+                return result;
+
+            } else {
+                // Không có role phù hợp, trả về empty
+                logger.warn("User has no valid role (not ADMIN or MANAGER)");
+                logger.info("=== SEARCH DEBUG END ===");
+                return emptyPage();
+            }
+
         } catch (RSQLParserException pe) {
             logger.error("{} SEARCH RSQLParserException FAIL: {}", this.getClass().getSimpleName(), query);
             return emptyPage();
         } catch (Exception e) {
-            logger.error("{} SEARCH Exception FAIL: {}", this.getClass().getSimpleName(), query);
+            logger.error("{} SEARCH Exception FAIL: {}", this.getClass().getSimpleName(), query, e);
             return emptyPage();
         }
     }

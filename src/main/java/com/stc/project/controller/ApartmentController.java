@@ -30,12 +30,4 @@ public class ApartmentController extends CrudController<Apartment, Long> {
         this.apartmentRepository = repository;
         this.baseUrl = "/api/apartments";
     }
-
-    //get data created by user đang login
-    @GetMapping("/detail")
-    public ResponseEntity<?> getData() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String username = authentication.getName();
-        return ResponseEntity.ok(apartmentRepository.findByCreatedBy(username));
-    }
 }

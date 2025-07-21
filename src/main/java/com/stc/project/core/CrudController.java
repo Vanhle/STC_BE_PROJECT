@@ -37,23 +37,24 @@ public abstract class CrudController<T extends IdEntity, ID extends Serializable
 
 
     //findAll có hỗ trợ phân trang
-    @GetMapping()
-    public ResponseEntity<List<T>> list(Pageable pageable) {
-        Page<T> page = service.findAll(pageable);
-        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(page, baseUrl);
-        return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
-    }
+//    @GetMapping()
+//    public ResponseEntity<List<T>> list(Pageable pageable) {
+//        Page<T> page = service.findAll(pageable);
+//        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(page, baseUrl);
+//        return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
+//    }
 
 
     @GetMapping(path = "/search")
 //    @PreAuthorize("hasAnyRole('MANAGER', 'STAFF')")
-    public ResponseEntity<List<T>> get(@RequestParam("query") String query, @PageableDefault(size = Integer.MAX_VALUE) Pageable pageable) {
+    public ResponseEntity<List<T>> get( @RequestParam(value = "query", required = false) String query, Pageable pageable) {
         try {
             Page<T> page = service.search(query, pageable);
             HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(page, baseUrl);
             return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
         } catch (Exception e) {
-            return null;
+            logger.error("Error during search: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 
