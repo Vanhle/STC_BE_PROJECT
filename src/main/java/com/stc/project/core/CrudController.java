@@ -14,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 
 public abstract class CrudController<T extends IdEntity, ID extends Serializable> {
@@ -47,11 +48,11 @@ public abstract class CrudController<T extends IdEntity, ID extends Serializable
 
     @GetMapping(path = "/search")
 //    @PreAuthorize("hasAnyRole('MANAGER', 'STAFF')")
-    public ResponseEntity<List<T>> get( @RequestParam(value = "query", required = false) String query, Pageable pageable) {
+    public ResponseEntity<Page<T>> get( @RequestParam(value = "query", required = false) String query, Pageable pageable) {
         try {
             Page<T> page = service.search(query, pageable);
             HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(page, baseUrl);
-            return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
+            return new ResponseEntity<>(page, headers, HttpStatus.OK);
         } catch (Exception e) {
             logger.error("Error during search: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();

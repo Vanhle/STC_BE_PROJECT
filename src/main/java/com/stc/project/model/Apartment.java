@@ -25,7 +25,7 @@ public class Apartment extends IdEntity {
     String description;
 
     @Transient // trường này không được lưu xuống DB, chỉ dùng tạm thời trong Java để nhận dữ liệu.
-    @JsonProperty("building_id")
+//    @JsonProperty("building_id") // Khi nào cần nạp data thì mới baatj dòng này
     private Long buildingId; // Trường phụ, chỉ dùng để nhận từ client
 
     @PostLoad
@@ -40,4 +40,10 @@ public class Apartment extends IdEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "building_id")
     Building building;
+
+    @JsonProperty("buildingName")
+    public String getBuildingName() {
+        return building != null ? building.getName() : null;
+    }
+
 }
