@@ -46,6 +46,14 @@ public class AuthenticationImpl implements AuthenticationService {
     @NonFinal
     @Value("${jwt.signed_key}")
     protected String SIGNED_KEY;
+    
+    @NonFinal
+    @Value("${jwt.access-token.expiration}")
+    private long accessTokenExpiration;
+
+    @NonFinal
+    @Value("${jwt.refresh-token.expiration}")
+    private long refreshTokenExpiration;
 
     InvalidatedTokenRepository invalidatedTokenRepository;
     UserRepository userRepository;
@@ -304,7 +312,7 @@ public class AuthenticationImpl implements AuthenticationService {
                 .subject(users.getUsername())
                 .issuer("stc.project.com")
                 .issueTime(new Date())
-                .expirationTime(new Date(System.currentTimeMillis() + 15 * 60 * 1000)) // 15 minutes
+                .expirationTime(new Date(System.currentTimeMillis() + accessTokenExpiration)) // lấy từ properties
                 .claim("scope", buildScope(users))
                 .jwtID(UUID.randomUUID().toString())
                 .build();
@@ -328,7 +336,7 @@ public class AuthenticationImpl implements AuthenticationService {
                 .id(UUID.randomUUID().toString())
                 .userId(user.getId())
                 .token(refreshTokenValue)
-                .expiresAt(new Date(System.currentTimeMillis() + 7 * 24 * 60 * 60 * 1000L)) // 7 days
+                .expiresAt(new Date(System.currentTimeMillis() + refreshTokenExpiration)) // lấy từ properties
                 .createdAt(new Date())
                 .isRevoked(false)
                 .build();

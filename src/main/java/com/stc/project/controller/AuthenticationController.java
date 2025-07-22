@@ -11,11 +11,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.*;
 
 import java.text.ParseException;
 import java.time.Instant;
@@ -119,5 +117,16 @@ public class AuthenticationController {
                 .message("Đặt lại mật khẩu thành công")
                 .build();
         return ResponseEntity.ok(apiResponse);
+    }
+
+    @GetMapping("/aboutme")
+    public ResponseEntity<?> test() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        ApiResponse<String> api = ApiResponse.<String>builder()
+                .timestamp(Instant.now())
+                .status(HttpStatus.OK.value())
+                .data(authentication.getName())
+                .build();
+        return ResponseEntity.ok(api);
     }
 }
