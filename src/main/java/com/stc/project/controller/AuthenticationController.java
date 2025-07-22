@@ -90,7 +90,7 @@ public class AuthenticationController {
 
     @PostMapping("/resendotp")
     public ResponseEntity<?> resendOtp(@RequestBody @Valid ResendOtpRequest rq) {
-        authenticationService.refreshOtp(rq.getEmail());
+        authenticationService.refreshOtp(rq.getEmail(), rq.getIsReset());
         ApiResponse<Void> apiResponse = ApiResponse.<Void>builder()
                 .timestamp(Instant.now())
                 .status(HttpStatus.OK.value())
