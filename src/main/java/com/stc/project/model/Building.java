@@ -26,7 +26,7 @@ public class Building extends IdEntity {
     String description;
 
     @Transient // trường này không được lưu xuống DB, chỉ dùng tạm thời trong Java để nhận dữ liệu.
-    @JsonProperty("project_id")
+//    @JsonProperty("project_id") // Khi nào cần nạp data thì mới baatj dòng này
     Long projectId; // Trường phụ, chỉ dùng để nhận từ client\ không phải là một trường thật, mà là một @Transient,
 
     @PostLoad

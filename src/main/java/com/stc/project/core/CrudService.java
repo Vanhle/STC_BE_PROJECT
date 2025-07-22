@@ -111,6 +111,7 @@ public class CrudService<T extends AbstractEntity, ID extends Serializable> {
                 Page<T> result = repository.findAll(spec, pageable);
                 logger.info("MANAGER - Result count: {}", result.getTotalElements());
                 logger.info("=== SEARCH DEBUG END ===");
+                logger.info(spec.toString());
                 return result;
 
             } else {
