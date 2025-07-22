@@ -248,12 +248,12 @@ public class AuthenticationImpl implements AuthenticationService {
         return false;
     }
 
-    public void refreshOtp(String username) {
+    public void refreshOtp(String username, boolean isReset) {
         User user = findUserByUsernameOrEmail(username);
         if (user.getOtpLockedUntil() != null && user.getOtpLockedUntil().isAfter(LocalDateTime.now())) {
             throw new AppException(ErrorCode.OTP_LOCKED);
         }
-        if (user.getIsVerified()) {
+        if (user.getIsVerified() && !isReset) {
             throw new AppException(ErrorCode.USER_ALREADY_VERIFIED);
         }
         String otp = generateOtp();

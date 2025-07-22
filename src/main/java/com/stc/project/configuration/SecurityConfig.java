@@ -51,7 +51,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173"));
+        configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173","http://localhost:4173"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("*") );
         configuration.setAllowCredentials(true);
@@ -67,9 +67,10 @@ public class SecurityConfig {
         // Config các endpoint cho phép truy cập
         httpSecurity.authorizeHttpRequests(request ->
                 request
-                        // Swagger endpoints - phải đặt đầu tiên
+                        // Swagger endpoints - phải đặt đầu tiên, không chỉ GET
                         .requestMatchers(
                                 "/v3/api-docs/**",
+                                "/v3/api-docs",
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
                                 "/swagger-resources/**",
@@ -78,10 +79,10 @@ public class SecurityConfig {
                         // Auth endpoints
                         .requestMatchers(HttpMethod.POST, "/auth/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/auth/**").permitAll()
-                        .requestMatchers( "/api/projects/**").authenticated()
-                        .requestMatchers( "/api/buildings/**").authenticated()
-                        .requestMatchers( "/api/apartments/**").authenticated()
-                        .requestMatchers( "/api/users/**").permitAll()
+                        .requestMatchers("/api/projects/**").authenticated()
+                        .requestMatchers("/api/buildings/**").authenticated()
+                        .requestMatchers("/api/apartments/**").authenticated()
+                        .requestMatchers("/api/users/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/test/*").hasRole("ADMIN")
                         .anyRequest().authenticated());
 

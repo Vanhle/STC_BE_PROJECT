@@ -45,7 +45,7 @@ public interface AuthenticationService {
     /**
      * Gửi lại OTP
      */
-    void refreshOtp(String username);
+    void refreshOtp(String username, boolean isReset);
     
     /**
      * Quên mật khẩu - gửi OTP
