@@ -147,15 +147,16 @@ public class CrudService<T extends AbstractEntity, ID extends Serializable> {
     }
 
 
-    // vô hiệu hóa
+    // vô hiệu hóa khi còn hoạt động ( active == 1 )
     public void deactivate(ID id) {
         T t = get(id);
-        if (t.getDeletedAt() == null) {
+        if (t.getActive() == Constants.EntityStatus.ACTIVE) {
             t.setActive(Constants.EntityStatus.DEACTIVATED);
             t.setDeactivatedAt(LocalDateTime.now());
+            t.setUpdatedBy(SecurityUtil.getCurrentUserLogin());
             repository.save(t);
         } else {
-            throw new IllegalStateException("Cannot deactivate because the object has already been soft-deleted."
+            throw new IllegalStateException("Cannot deactivate because the object has already been soft-deleted or deactivated."
             );
         }
     }
@@ -164,10 +165,11 @@ public class CrudService<T extends AbstractEntity, ID extends Serializable> {
     // xóa mềm ( chuyển vào thùng rác tạm ) - áp dụng cho các bản ghi đang active và đang bị deactive
     public void moveToTrash(ID id) {
         T t = get(id);
-        if(t.getDeletedAt() == null) {
+        if(t.getActive() != Constants.EntityStatus.IN_ACTIVE) {
             t.setActive(Constants.EntityStatus.IN_ACTIVE);
             t.setDeletedAt(LocalDateTime.now());
             t.setDeactivatedAt(null);
+            t.setUpdatedBy(SecurityUtil.getCurrentUserLogin());
             repository.save(t);
         } else {
             throw new IllegalStateException("Unable to move the object to trash.");
@@ -179,12 +181,14 @@ public class CrudService<T extends AbstractEntity, ID extends Serializable> {
     public void moveDeactivateToTrashAll() {
         try {
             List<T> trashItems = repository.findAll().stream()
-                    .filter(p -> p.getDeactivatedAt() != null && p.getDeletedAt() == null)
+                    .filter(p -> p.getActive() == Constants.EntityStatus.DEACTIVATED)
                     .collect(Collectors.toList());
 
             trashItems.forEach(item -> {
+                item.setActive(Constants.EntityStatus.IN_ACTIVE);
                 item.setDeletedAt(LocalDateTime.now());
                 item.setDeactivatedAt(null);
+                item.setUpdatedBy(SecurityUtil.getCurrentUserLogin());
             });
 
             repository.saveAll(trashItems);
@@ -198,10 +202,16 @@ public class CrudService<T extends AbstractEntity, ID extends Serializable> {
     public void restore(ID id) {
         T t = get(id);
         beforeRestore(t);
-        t.setActive(Constants.EntityStatus.ACTIVE);
-        t.setDeactivatedAt(null);
-        t.setDeletedAt(null);
-        repository.save(t);
+        if(t.getActive() != Constants.EntityStatus.ACTIVE) {
+            t.setActive(Constants.EntityStatus.ACTIVE);
+            t.setDeactivatedAt(null);
+            t.setDeletedAt(null);
+            t.setUpdatedBy(SecurityUtil.getCurrentUserLogin());
+            repository.save(t);
+        }
+        else {
+            throw new IllegalStateException("Unable to restore active object");
+        }
     }
 
 
@@ -209,15 +219,15 @@ public class CrudService<T extends AbstractEntity, ID extends Serializable> {
     public void restoreAllDeactivated() {
         try {
             List<T> deactivatedItems = repository.findAll().stream()
-                    .filter(e -> e.getDeactivatedAt() != null)
+                    .filter(e -> e.getActive() == Constants.EntityStatus.DEACTIVATED)
                     .collect(Collectors.toList());
 
             for (T item : deactivatedItems) {
                 //kiểm tra điều kiện trước khi khôi phục
                 beforeRestore(item);
-
                 item.setActive(Constants.EntityStatus.ACTIVE);
                 item.setDeactivatedAt(null);
+                item.setUpdatedBy(SecurityUtil.getCurrentUserLogin());
             }
 
             repository.saveAll(deactivatedItems);
@@ -230,15 +240,15 @@ public class CrudService<T extends AbstractEntity, ID extends Serializable> {
     public void restoreAllFromTrash() {
         try {
             List<T> trashItems = repository.findAll().stream()
-                    .filter(e -> e.getDeletedAt() != null)
+                    .filter(e -> e.getActive() == Constants.EntityStatus.IN_ACTIVE)
                     .collect(Collectors.toList());
 
             for (T item : trashItems) {
                 //kiểm tra điều kiện trước khi khôi phục
                 beforeRestore(item);
-
                 item.setActive(Constants.EntityStatus.ACTIVE);
                 item.setDeletedAt(null);
+                item.setUpdatedBy(SecurityUtil.getCurrentUserLogin());
             }
 
             repository.saveAll(trashItems);
@@ -259,7 +269,7 @@ public class CrudService<T extends AbstractEntity, ID extends Serializable> {
     public void clearTrash() {
         try {
             List<T> trashItems = repository.findAll().stream()
-                    .filter(e -> e.getActive() == 0)
+                    .filter(e -> e.getActive() == Constants.EntityStatus.IN_ACTIVE)
                     .collect(Collectors.toList());
             repository.deleteAll(trashItems);
         } catch (Exception e) {
@@ -275,18 +285,11 @@ public class CrudService<T extends AbstractEntity, ID extends Serializable> {
             //ví dụ hnay là 17/5 thì expiredTime = 17/4
             LocalDateTime expiredTime = LocalDateTime.now().minusDays(30);
             List<T> expired = repository.findAll().stream()
-                    .filter(e -> e.getActive() == 0 && e.getDeletedAt() != null && e.getDeletedAt().isBefore(expiredTime))
+                    .filter(e -> e.getActive() == Constants.EntityStatus.IN_ACTIVE && e.getDeletedAt().isBefore(expiredTime))
                     .collect(Collectors.toList());
             repository.deleteAll(expired);
         } catch (Exception e) {
             throw new RuntimeException("Failed to delete expired items in the trash: " + e.getMessage(), e);
-        }
-    }
-
-
-    public void batchDelete(List<ID> ids) {
-        for (ID id : ids) {
-            deleteById(id);
         }
     }
 
