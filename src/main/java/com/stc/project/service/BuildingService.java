@@ -8,6 +8,7 @@ import com.stc.project.model.Project;
 import com.stc.project.repository.ApartmentRepository;
 import com.stc.project.repository.BuildingRepository;
 import com.stc.project.repository.ProjectRepository;
+import com.stc.project.utils.SecurityUtil;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Service
@@ -45,14 +47,33 @@ public class BuildingService extends CrudService<Building, Long> {
     }
 
     @Override
-    protected void beforeUpdate(Building building) {
+    public void beforeUpdate(Building newBuilding) {
         try {
-            super.beforeUpdate(building);
-            assignAndValidateProject(building);
+            super.beforeUpdate(newBuilding);
+
+            Building oldBuilding = get(newBuilding.getId());
+            String oldCode = oldBuilding.getCode();
+            String newCode = newBuilding.getCode();
+
+            boolean codeChanged = !oldCode.equals(newCode);
+
+            if (codeChanged) {
+                List<Apartment> apartments = apartmentRepository.findByBuilding_Id(newBuilding.getId());
+                for (Apartment apartment : apartments) {
+                    String aptCode = apartment.getCode();
+                    if (aptCode != null && aptCode.contains(oldCode)) {
+                        apartment.setCode(aptCode.replaceFirst(Pattern.quote(oldCode), newCode));
+                    }
+                }
+            }
+
+            assignAndValidateProject(newBuilding);
+
         } catch (Exception e) {
-            throw new RuntimeException("Error while updating building: " + e.getMessage(), e);
+            throw new RuntimeException("Error during building update: " + e.getMessage(), e);
         }
     }
+
 
 
     // Chỉ thêm và sửa Building nếu
@@ -89,12 +110,12 @@ public class BuildingService extends CrudService<Building, Long> {
     public void deactivate(Long id) {
         try {
             super.deactivate(id);
-
             List<Apartment> apartments = apartmentRepository.findByBuilding_Id(id);
             for (Apartment apartment : apartments) {
-                if (apartment.getDeletedAt() == null) {
+                if (apartment.getActive() == Constants.EntityStatus.ACTIVE) {
                     apartment.setActive(Constants.EntityStatus.DEACTIVATED);
                     apartment.setDeactivatedAt(LocalDateTime.now());
+                    apartment.setUpdatedBy(SecurityUtil.getCurrentUserLogin());
                     apartmentRepository.save(apartment);
                 }
             }
@@ -111,10 +132,11 @@ public class BuildingService extends CrudService<Building, Long> {
 
             List<Apartment> apartments = apartmentRepository.findByBuilding_Id(id);
             for (Apartment apartment : apartments) {
-                if (apartment.getDeletedAt() == null) {
+                if (apartment.getActive() != Constants.EntityStatus.IN_ACTIVE) {
                     apartment.setActive(Constants.EntityStatus.IN_ACTIVE);
                     apartment.setDeletedAt(LocalDateTime.now());
                     apartment.setDeactivatedAt(null);
+                    apartment.setUpdatedBy(SecurityUtil.getCurrentUserLogin());
                     apartmentRepository.save(apartment);
                 }
             }
@@ -130,16 +152,17 @@ public class BuildingService extends CrudService<Building, Long> {
             super.moveDeactivateToTrashAll();
 
             List<Building> trashedBuildings = buildingRepository.findAll().stream()
-                    .filter(b -> b.getDeletedAt() != null)
+                    .filter(b -> b.getActive() == Constants.EntityStatus.DEACTIVATED)
                     .collect(Collectors.toList());
 
             for (Building building : trashedBuildings) {
                 List<Apartment> apartments = apartmentRepository.findByBuilding_Id(building.getId());
                 for (Apartment apartment : apartments) {
-                    if (apartment.getDeletedAt() == null) {
+                    if (apartment.getActive() == Constants.EntityStatus.DEACTIVATED) {
                         apartment.setActive(Constants.EntityStatus.IN_ACTIVE);
                         apartment.setDeletedAt(LocalDateTime.now());
                         apartment.setDeactivatedAt(null);
+                        apartment.setUpdatedBy(SecurityUtil.getCurrentUserLogin());
                         apartmentRepository.save(apartment);
                     }
                 }

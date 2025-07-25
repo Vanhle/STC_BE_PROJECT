@@ -47,4 +47,10 @@ public class Building extends IdEntity {
     @OneToMany(mappedBy = "building", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     List<Apartment> apartments;
 
+    // Cột này dùng cho fe
+    @JsonProperty("projectName")
+    public String getProjectName() {
+        return project != null ? project.getName() : null;
+    }
+
 }

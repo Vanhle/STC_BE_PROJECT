@@ -41,6 +41,7 @@ public class Apartment extends IdEntity {
     @JoinColumn(name = "building_id")
     Building building;
 
+    // Cột này dùng cho fe
     @JsonProperty("buildingName")
     public String getBuildingName() {
         return building != null ? building.getName() : null;

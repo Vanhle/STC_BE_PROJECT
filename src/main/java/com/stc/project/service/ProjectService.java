@@ -8,6 +8,7 @@ import com.stc.project.model.Project;
 import com.stc.project.repository.ApartmentRepository;
 import com.stc.project.repository.BuildingRepository;
 import com.stc.project.repository.ProjectRepository;
+import com.stc.project.utils.SecurityUtil;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -97,15 +98,17 @@ public class ProjectService extends CrudService<Project, Long> {
             super.deactivate(id);
             List<Building> buildings = buildingRepository.findByProject_Id(id);
             for (Building building : buildings) {
-                if (building.getDeletedAt() == null) {
+                if (building.getActive() == Constants.EntityStatus.ACTIVE ) {
                     building.setActive(Constants.EntityStatus.DEACTIVATED);
                     building.setDeactivatedAt(LocalDateTime.now());
+                    building.setUpdatedBy(SecurityUtil.getCurrentUserLogin());
 
                     List<Apartment> apartments = apartmentRepository.findByBuilding_Id(building.getId());
                     for (Apartment apartment : apartments) {
-                        if (apartment.getDeletedAt() == null) {
+                        if (apartment.getActive() == Constants.EntityStatus.ACTIVE) {
                             apartment.setActive(Constants.EntityStatus.DEACTIVATED);
                             apartment.setDeactivatedAt(LocalDateTime.now());
+                            apartment.setUpdatedBy(SecurityUtil.getCurrentUserLogin());
                             apartmentRepository.save(apartment);
                         }
                     }
@@ -125,17 +128,19 @@ public class ProjectService extends CrudService<Project, Long> {
             super.moveToTrash(id);
             List<Building> buildings = buildingRepository.findByProject_Id(id);
             for (Building building : buildings) {
-                if (building.getDeletedAt() == null) {
+                if (building.getActive() != Constants.EntityStatus.IN_ACTIVE) {
                     building.setActive(Constants.EntityStatus.IN_ACTIVE);
                     building.setDeletedAt(LocalDateTime.now());
                     building.setDeactivatedAt(null);
+                    building.setUpdatedBy(SecurityUtil.getCurrentUserLogin());
 
                     List<Apartment> apartments = apartmentRepository.findByBuilding_Id(building.getId());
                     for (Apartment apartment : apartments) {
-                        if (apartment.getDeletedAt() == null) {
+                        if (apartment.getActive() != Constants.EntityStatus.IN_ACTIVE) {
                             apartment.setActive(Constants.EntityStatus.IN_ACTIVE);
                             apartment.setDeletedAt(LocalDateTime.now());
                             apartment.setDeactivatedAt(null);
+                            apartment.setUpdatedBy(SecurityUtil.getCurrentUserLogin());
                             apartmentRepository.save(apartment);
                         }
                     }
@@ -155,27 +160,29 @@ public class ProjectService extends CrudService<Project, Long> {
 
             // Tìm các Project vừa bị xóa mềm
             List<Project> trashedProjects = projectRepository.findAll().stream()
-                    .filter(p -> p.getDeletedAt() != null)
+                    .filter(p -> p.getActive() == Constants.EntityStatus.DEACTIVATED)
                     .collect(Collectors.toList());
 
             for (Project project : trashedProjects) {
                 List<Building> buildings = buildingRepository.findByProject_Id(project.getId());
 
                 for (Building building : buildings) {
-                    if (building.getDeletedAt() == null && building.getDeactivatedAt() != null) {
+                    if (building.getActive() == Constants.EntityStatus.DEACTIVATED) {
                         building.setDeletedAt(LocalDateTime.now());
                         building.setActive(Constants.EntityStatus.IN_ACTIVE);
                         building.setDeactivatedAt(null);
+                        building.setUpdatedBy(SecurityUtil.getCurrentUserLogin());
                         buildingRepository.save(building);
                     }
 
                     // Xử lý tiếp Apartment thuộc Building
                     List<Apartment> apartments = apartmentRepository.findByBuilding_Id(building.getId());
                     for (Apartment apartment : apartments) {
-                        if (apartment.getDeletedAt() == null && apartment.getDeactivatedAt() != null) {
+                        if (apartment.getActive() == Constants.EntityStatus.DEACTIVATED) {
                             apartment.setActive(Constants.EntityStatus.IN_ACTIVE);
                             apartment.setDeletedAt(LocalDateTime.now());
                             apartment.setDeactivatedAt(null);
+                            apartment.setUpdatedBy(SecurityUtil.getCurrentUserLogin());
                             apartmentRepository.save(apartment);
                         }
                     }
