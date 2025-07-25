@@ -35,5 +35,4 @@ public enum ErrorCode {
     NEED_TO_VERIFY("Need to verify", HttpStatus.UNAUTHORIZED);
     String errorMessage;
     HttpStatus status;
-
 }
