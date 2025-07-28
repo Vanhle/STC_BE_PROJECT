@@ -26,7 +26,6 @@ public class Project extends IdEntity {
     LocalDate constructionStartDateFrom;
     @JsonFormat(pattern = "yyyy-MM-dd")
     LocalDate expectedCompletionDate;
-    String image;
     String description;
 
     // Một Project có nhiều Building
