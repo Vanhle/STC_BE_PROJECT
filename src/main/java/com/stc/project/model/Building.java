@@ -52,4 +52,9 @@ public class Building extends IdEntity {
         return project != null ? project.getName() : null;
     }
 
+    // Cột này dùng cho fe
+    @JsonProperty("projectCode")
+    public String getProjectCode() {
+        return project != null ? project.getCode() : null;
+    }
 }

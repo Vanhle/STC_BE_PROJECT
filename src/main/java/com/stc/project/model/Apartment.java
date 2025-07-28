@@ -46,4 +46,9 @@ public class Apartment extends IdEntity {
         return building != null ? building.getName() : null;
     }
 
+    // Cột này dùng cho fe
+    @JsonProperty("buildingCode")
+    public String getBuildingCode() {
+        return building != null ? building.getCode() : null;
+    }
 }
