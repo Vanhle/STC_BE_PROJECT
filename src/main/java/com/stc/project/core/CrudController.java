@@ -36,6 +36,11 @@ public abstract class CrudController<T extends IdEntity, ID extends Serializable
         return service.get(id);
     }
 
+    //findAll
+    @GetMapping()
+    public List<T> listAll() {
+        return service.findAll();
+    }
 
     //findAll có hỗ trợ phân trang
 //    @GetMapping()
